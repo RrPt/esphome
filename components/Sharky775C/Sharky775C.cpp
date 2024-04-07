@@ -24,6 +24,7 @@ static const uint16_t Sharky775_COMMAND_RESPONSE_TELE_LEN = 32;
 
 
 void Sharky775Component::setup() {
+    ESP_LOGI(TAG, "Start Sharky775C V1.0 from https://github.com/RrPt/esphome/tree/master/components/Sharky775C");
     loopcounter = 0;
     state = Sharky775_Wait;
     awakeByte = 0x55;
