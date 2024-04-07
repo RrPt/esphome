@@ -37,6 +37,7 @@ void Sharky775Component::setup() {
 }
 
 void Sharky775Component::update() {
+    ESP_LOGI(TAG, "Update Sharky775C V1.0 from https://github.com/RrPt/esphome/tree/master/components/Sharky775C");
     noAwakeBytesToSend = noOfAwakeBytes_; // 480;
     nextCheckMillis = 0;
     state = Sharky775_SendingAwake;
