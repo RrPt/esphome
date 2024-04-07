@@ -1,0 +1,246 @@
+substitutions:
+  basetopic: HZG/COUNTER/
+
+esphome:
+  name: esphome26
+  friendly_name: ESPHome26
+
+esp32:
+  board: lolin32
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+  level: DEBUG # INFO  DEBUG VERBOSE  VERY_VERBOSE
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "<my_api_key>"
+
+ota:
+  password: "<my_password>"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Esphome26 Fallback Hotspot"
+    password: !secret wifi_password
+
+captive_portal:
+
+mqtt:
+  broker: <my_mqtt_broker_ip>
+  username: <my_mqtt_broker_user>
+  password: !secret mqtt_password
+
+web_server:
+  port: 80
+
+uart:
+  - id: uart_hzg
+    tx_pin: GPIO12    # senden
+    rx_pin: GPIO13    # empfangen
+    baud_rate: 2400
+    parity: EVEN
+
+time:
+  - platform: sntp
+    id: mytime
+    servers: 
+      - <my_ntp_server_ip1>
+      - <my_ntp_server_ip2>
+
+external_components:
+  - source: github://RrPt/esphome/Sharky775C
+
+Sharky775C:
+    id: wz
+    uart_id: uart_hzg
+    #MBus_Adr: 0           # =default
+    update_interval: 15s
+    # noOfAwakeBytes: 480  # =default
+    #timeout: 5000         # =default
+    temperature_in:
+      name: "Sharky775 Temperature in"
+      id: Temp_in
+      filters:
+        - clamp:
+            min_value: 10
+            max_value: 90
+            ignore_out_of_range: true
+        - timeout: 300s  # sent value will be NaN
+      on_value:
+        then:
+          - mqtt.publish_json:
+              topic: "${basetopic}TempVorlauf"
+              payload: |-
+                root["value"] = id(Temp_in).state;
+                root["unit"] = "C";
+                char str[25];
+                auto curTime = id(mytime).utcnow();
+                curTime.strftime(str, sizeof(str), "%Y-%m-%dT%H:%M:%S.000Z");
+                root["time"] =  str;
+    temperature_out:
+      name: "Sharky775 Temperature out"
+      id: Temp_out
+      filters:
+        - clamp:
+            min_value: 10
+            max_value: 70
+            ignore_out_of_range: true
+        - timeout: 300s  # sent value will be NaN
+      on_value:
+        then:
+          - mqtt.publish_json:
+              topic: "${basetopic}TempRücklauf"
+              payload: |-
+                root["value"] = id(Temp_out).state;
+                root["unit"] = "C";
+                char str[25];
+                auto curTime = id(mytime).utcnow();
+                curTime.strftime(str, sizeof(str), "%Y-%m-%dT%H:%M:%S.000Z");
+                root["time"] =  str;
+    energy:
+      name: "Sharky775 Energy"  
+      id: Energy
+      filters:
+        - timeout: 300s  # sent value will be NaN
+      on_value:
+        then:
+          - mqtt.publish_json:
+              topic: "${basetopic}Energie"
+              payload: |-
+                root["value"] = id(Energy).state / 1000.0;
+                root["unit"] = "MWh";
+                char str[25];
+                auto curTime = id(mytime).utcnow();
+                curTime.strftime(str, sizeof(str), "%Y-%m-%dT%H:%M:%S.000Z");
+                root["time"] =  str;
+    energy_calc:
+      name: "Sharky775 Energy Calc"  
+      id: EnergyCalc
+      filters:
+        - timeout: 300s  # sent value will be NaN
+      on_value:
+        then:
+          - mqtt.publish_json:
+              topic: "${basetopic}EnergieCalc"
+              payload: |-
+                root["value"] = id(EnergyCalc).state / 1000.0;
+                root["unit"] = "MWh";
+                char str[25];
+                auto curTime = id(mytime).utcnow();
+                curTime.strftime(str, sizeof(str), "%Y-%m-%dT%H:%M:%S.000Z");
+                root["time"] =  str;
+    power:
+      name: "Sharky775 Power"
+      id: Power
+      max: 100
+      filters:
+        - clamp:
+            min_value: 0
+            max_value: 10000
+            ignore_out_of_range: true
+        - timeout: 300s  # sent value will be NaN
+      on_value:
+        then:
+          - mqtt.publish_json:
+              topic: "${basetopic}Leistung"
+              payload: |-
+                root["value"] = id(Power).state / 1000.0;
+                root["unit"] = "kW";
+                char str[25];
+                auto curTime = id(mytime).utcnow();
+                curTime.strftime(str, sizeof(str), "%Y-%m-%dT%H:%M:%S.000Z");
+                root["time"] =  str;
+    flow:
+      name: "Sharky775 flow"  
+      id: Flow
+      filters:
+        - clamp:
+            min_value: 0
+            max_value: 1
+            ignore_out_of_range: true
+        - timeout: 300s  # sent value will be NaN
+      on_value:
+        then:
+          - mqtt.publish_json:
+              topic: "${basetopic}Fluss"
+              payload: |-
+                root["value"] = id(Flow).state;
+                root["unit"] = "m3ph";
+                char str[25];
+                auto curTime = id(mytime).utcnow();
+                curTime.strftime(str, sizeof(str), "%Y-%m-%dT%H:%M:%S.000Z");
+                root["time"] =  str;
+    volume:
+      name: "Sharky775 volume"  
+      id: Volume
+      filters:
+        - timeout: 300s  # sent value will be NaN
+      on_value:
+        then:
+          - mqtt.publish_json:
+              topic: "${basetopic}Volumen"
+              payload: |-
+                root["value"] = id(Volume).state;
+                root["unit"] = "m3ph";
+                char str[25];
+                auto curTime = id(mytime).utcnow();
+                curTime.strftime(str, sizeof(str), "%Y-%m-%dT%H:%M:%S.000Z");
+                root["time"] =  str;
+    ontime:
+      name: "Sharky775 ontime"  
+      id: ontime
+      filters:
+        - timeout: 300s  # sent value will be NaN
+      on_value:
+        then:
+          - mqtt.publish_json:
+              topic: "${basetopic}Einschaltzeit"
+              payload: |-
+                root["value"] = id(ontime).state;
+                root["unit"] = "h";
+                char str[25];
+                auto curTime = id(mytime).utcnow();
+                curTime.strftime(str, sizeof(str), "%Y-%m-%dT%H:%M:%S.000Z");
+                root["time"] =  str;
+    counter_time:
+      name: "Sharky775 CounterTime"
+      id: countertime
+      on_value:
+        then:
+          - mqtt.publish_json:
+              topic: "${basetopic}Zaehlerzeit"
+              payload: |-
+                root["value"] = id(countertime).state;
+                char str[25];
+                auto curTime = id(mytime).utcnow();
+                curTime.strftime(str, sizeof(str), "%Y-%m-%dT%H:%M:%S.000Z");
+                root["time"] =  str;
+    measure_time:
+      name: "Sharky775 MeasureTime"
+      id: measuretime
+      on_value:
+        then:
+          - mqtt.publish_json:
+              topic: "${basetopic}Messzeit"
+              payload: |-
+                root["value"] = id(measuretime).state;
+                char str[25];
+                auto curTime = id(mytime).utcnow();
+                curTime.strftime(str, sizeof(str), "%Y-%m-%dT%H:%M:%S.000Z");
+                root["time"] =  str;
+ 
+button: #creates a button to set Sharky Time 
+  - platform: template
+    name: "SetSharky775Time"
+    id: setsharky775time
+    entity_category: diagnostic
+    on_press:
+      - sharky775ns.set_time: wz
